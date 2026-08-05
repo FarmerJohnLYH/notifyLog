@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
+        app:navigationIcon="@drawable/ic_back"
+        app:title="@string/settings_title" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- ===== Capture ===== -->
+            <TextView style="@style/SectionHeader" android:text="@string/settings_section_capture" />
+
+            <LinearLayout android:id="@+id/rowLogOngoing" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_log_ongoing" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_log_ongoing_desc" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchLogOngoing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowExcluded" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_excluded" />
+                    <TextView android:id="@+id/excludedSummary" style="@style/SettingSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== Keep alive ===== -->
+            <TextView style="@style/SectionHeader" android:text="@string/settings_section_keepalive" />
+
+            <LinearLayout android:id="@+id/rowKeepAlive" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_keepalive" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_keepalive_desc" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchKeepAlive"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowHeartbeat" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_heartbeat" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_heartbeat_desc" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchHeartbeat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowKeepAliveGuide" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_keepalive_guide" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_keepalive_guide_desc" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== Storage ===== -->
+            <TextView style="@style/SectionHeader" android:text="@string/settings_section_storage" />
+
+            <LinearLayout style="@style/SettingRow" android:clickable="false" android:focusable="false">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_usage" />
+                    <TextView android:id="@+id/usageSummary" style="@style/SettingSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowAutoClean" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_auto_clean" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_auto_clean_desc" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchAutoClean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:clickable="false"
+                    android:focusable="false" />
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowRetention" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_retention" />
+                    <TextView android:id="@+id/retentionSummary" style="@style/SettingSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowMaxRows" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_max_rows" />
+                    <TextView android:id="@+id/maxRowsSummary" style="@style/SettingSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowCleanNow" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_clean_now" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_clean_now_desc" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/SettingDivider" />
+
+            <LinearLayout android:id="@+id/rowClearAll" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView
+                        style="@style/SettingTitle"
+                        android:textColor="?attr/colorError"
+                        android:text="@string/settings_clear_all" />
+                    <TextView style="@style/SettingSummary" android:text="@string/settings_clear_all_desc" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== Status ===== -->
+            <TextView style="@style/SectionHeader" android:text="@string/settings_section_status" />
+
+            <LinearLayout android:id="@+id/rowGaps" style="@style/SettingRow">
+                <LinearLayout style="@style/SettingRowText">
+                    <TextView style="@style/SettingTitle" android:text="@string/settings_gaps" />
+                    <TextView android:id="@+id/gapsSummary" style="@style/SettingSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/droppedNote"
+                style="@style/SettingSummary"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/SettingSummary"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="20dp"
+                android:text="@string/note_otp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

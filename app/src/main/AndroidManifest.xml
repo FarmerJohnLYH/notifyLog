@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Core capture needs no runtime permission at all: notification access is
+         a special access the user grants in Settings, declared on the service
+         below. Everything here is either normal-protection or opt-in hardening.
+
+         RECEIVE_BOOT_COMPLETED (normal): lets the boot receiver ask the system
+         to rebind the listener after a reboot or an app update. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- The three below are only exercised when the user switches on the
+         optional foreground-service hardening in settings. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Sideloaded personal build: allows prompting for the battery-optimisation
+         exemption directly instead of walking the user through Settings. Play
+         Store distribution would have to drop this and rely on the guide. -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
+
+    <!-- Reads labels and icons of the apps whose notifications we log. Without
+         this, targetSdk 30+ can only see a filtered subset of installed apps. -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.NotifyLog">
+
+        <activity
+            android:name=".ui.LogListActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.LogListActivity" />
+
+        <activity
+            android:name=".ui.KeepAliveActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.LogListActivity" />
+
+        <activity
+            android:name=".ui.GapsActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.SettingsActivity" />
+
+        <!-- NotificationListenerService: bound by the system. The BIND permission
+             ensures only the system can bind it; exported=false keeps other apps out. -->
+        <service
+            android:name=".service.NotifyListenerService"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Optional hardening, off by default. No platform foreground-service
+             type describes "keep a notification listener resident", so this uses
+             specialUse with the required justification property. -->
+        <service
+            android:name=".service.KeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the notification listener process resident on ROMs that kill background processes and do not rebind the listener afterwards." />
+        </service>
+
+        <!-- Boot / update fallback: request rebind of the listener. directBootAware
+             lets it also fire at LOCKED_BOOT_COMPLETED (before first unlock). -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Optional low-frequency liveness check, off by default. Not exported:
+             only our own AlarmManager PendingIntent triggers it. -->
+        <receiver
+            android:name=".service.HeartbeatReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+    </application>
+</manifest>

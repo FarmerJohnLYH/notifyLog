@@ -1,0 +1,22 @@
+# Build output
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+*.hprof
+
+# Local machine config / secrets — never commit these
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Machine-specific helper (hardcodes personal paths from an old dev box)
+build.sh
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+captures/

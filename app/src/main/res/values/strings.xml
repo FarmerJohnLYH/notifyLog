@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NotifyLog</string>
+
+    <!-- Log list -->
+    <string name="status_not_granted">⚠ 未授予通知使用权，点此开启</string>
+    <string name="status_granted_not_connected">⚠ 已授权但监听未连接，点此重新授权</string>
+    <string name="empty_hint">暂无通知记录。\n授予通知使用权后，新到达的通知会自动记录到这里。</string>
+    <string name="empty_filtered">没有符合当前筛选条件的记录。</string>
+
+    <string name="action_search">搜索</string>
+    <string name="action_filter_app">按应用筛选</string>
+    <string name="action_export">导出日志</string>
+    <string name="action_keepalive">保活设置</string>
+    <string name="action_settings">设置</string>
+    <string name="search_hint">搜索标题 / 内容 / 应用</string>
+
+    <string name="chip_query">关键词：%1$s</string>
+
+    <!-- Item actions -->
+    <string name="item_copy">复制内容</string>
+    <string name="item_delete">删除这条</string>
+    <string name="item_filter_this_app">只看这个应用</string>
+    <string name="item_exclude_app">不再记录此应用</string>
+    <string name="copied">已复制</string>
+    <string name="deleted">已删除</string>
+    <string name="excluded_app">已停止记录 %1$s</string>
+
+    <!-- App picker -->
+    <string name="picker_title">按应用筛选</string>
+    <string name="picker_all">全部应用</string>
+    <string name="picker_count">%1$d 条</string>
+
+    <!-- Settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_section_capture">采集</string>
+    <string name="settings_log_ongoing">记录常驻通知</string>
+    <string name="settings_log_ongoing_desc">音乐播放、下载进度等会高频刷新，开启后写入量明显增加。默认关闭。</string>
+    <string name="settings_excluded">已排除的应用</string>
+    <string name="settings_excluded_desc">这些应用的通知完全不记录。当前 %1$d 个。</string>
+
+    <string name="settings_section_keepalive">保活</string>
+    <string name="settings_keepalive">前台服务加固</string>
+    <string name="settings_keepalive_desc">常驻一条静音通知以提升进程优先级。小米等激进 ROM 上建议开启。</string>
+    <string name="settings_heartbeat">定时心跳检查</string>
+    <string name="settings_heartbeat_desc">每约 30 分钟检查一次监听是否断开，断开则请求重连。功耗极低。</string>
+    <string name="settings_keepalive_guide">保活设置向导</string>
+    <string name="settings_keepalive_guide_desc">逐项跳转到系统里需要手动开启的开关。</string>
+
+    <string name="settings_section_storage">存储</string>
+    <string name="settings_usage">当前占用</string>
+    <string name="settings_usage_value">%1$s，共 %2$d 条记录</string>
+    <string name="settings_usage_since">最早记录：%1$s</string>
+    <string name="settings_usage_empty">暂无记录</string>
+    <string name="settings_auto_clean">自动清理</string>
+    <string name="settings_auto_clean_desc">默认关闭，日志永久保留。开启后按下面的阈值定期清理。</string>
+    <string name="settings_retention">保留天数</string>
+    <string name="settings_retention_value">%1$d 天</string>
+    <string name="settings_max_rows">最多保留条数</string>
+    <string name="settings_max_rows_value">%1$d 条</string>
+    <string name="settings_clean_now">立即清理旧记录</string>
+    <string name="settings_clean_now_desc">按上面的阈值执行一次清理。</string>
+    <string name="settings_clear_all">清空全部日志</string>
+    <string name="settings_clear_all_desc">不可撤销。</string>
+
+    <string name="settings_section_status">状态</string>
+    <string name="settings_gaps">监听中断记录</string>
+    <string name="settings_gaps_none">暂无中断记录。</string>
+    <string name="settings_gaps_desc">最近 %1$d 次中断，点击查看</string>
+    <string name="settings_dropped">因写入积压丢弃：%1$d 条</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_clear_all_title">清空全部日志？</string>
+    <string name="dialog_clear_all_message">将删除全部 %1$d 条记录，无法恢复。</string>
+    <string name="dialog_confirm">确定</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_cleaned">已清理 %1$d 条</string>
+    <string name="dialog_cleared">已清空</string>
+    <string name="dialog_retention_title">保留天数</string>
+    <string name="dialog_max_rows_title">最多保留条数</string>
+    <string name="dialog_excluded_title">已排除的应用</string>
+    <string name="dialog_excluded_empty">还没有排除任何应用。在日志列表里长按某条记录可以排除它所属的应用。</string>
+    <string name="dialog_excluded_remove">已排除的应用（取消勾选可恢复记录）</string>
+
+    <!-- Export -->
+    <string name="export_title">导出格式（按当前筛选）</string>
+    <string name="export_json">JSON</string>
+    <string name="export_csv">CSV（Excel 可读）</string>
+    <string name="export_running">正在导出…</string>
+    <string name="export_done">已导出 %1$d 条</string>
+    <string name="export_failed">导出失败：%1$s</string>
+    <string name="export_time_title">导出时间范围</string>
+    <string name="export_time_all">全部时间</string>
+    <string name="export_time_custom">选择日期范围…</string>
+
+    <!-- Gaps -->
+    <string name="gaps_title">监听中断记录</string>
+    <string name="gaps_ongoing">至今仍未恢复</string>
+    <string name="gaps_item">%1$s → %2$s</string>
+    <string name="gaps_duration">持续 %1$s</string>
+    <string name="gaps_hint">中断期间到达的通知无法补记。若中断频繁，请完成保活设置。</string>
+
+    <!-- Keep-alive guide -->
+    <string name="keepalive_title">保活设置向导</string>
+    <string name="keepalive_intro">通知监听由系统托管，正常情况下无需额外设置。但部分国产 ROM（尤其是小米 HyperOS）会强杀后台且不重新拉起，需要手动放行以下项目。</string>
+    <string name="keepalive_intro_xiaomi">检测到小米设备。HyperOS 的后台管控较为激进，建议逐项完成下面的设置，否则应用被杀后不会自动恢复记录。</string>
+    <string name="keepalive_step_access">1. 通知使用权</string>
+    <string name="keepalive_step_access_desc">核心权限。未授予时完全无法记录通知。</string>
+    <string name="keepalive_step_autostart">2. 自启动权限</string>
+    <string name="keepalive_step_autostart_desc">安全中心 → 应用管理 → NotifyLog → 权限 → 开启「自启动」。不开则被杀后不会重启。</string>
+    <string name="keepalive_step_battery_policy">3. 省电策略设为「无限制」</string>
+    <string name="keepalive_step_battery_policy_desc">在弹出的列表里找到 NotifyLog，选择「无限制」。</string>
+    <string name="keepalive_step_battery_opt">4. 忽略电池优化</string>
+    <string name="keepalive_step_battery_opt_desc">避免 Doze 待机期间被冻结。</string>
+    <string name="keepalive_step_lock">5. 后台锁定（需手动操作）</string>
+    <string name="keepalive_step_lock_desc">进入最近任务界面，下拉 NotifyLog 卡片将其锁定，防止一键清理时被杀。此项无法由应用代劳。</string>
+    <string name="keepalive_step_foreground">6. 前台服务加固（可选）</string>
+    <string name="keepalive_step_foreground_desc">常驻一条静音通知提升进程优先级，可在设置页开启。</string>
+
+    <string name="keepalive_go">前往设置</string>
+    <string name="keepalive_done">✓ 已完成</string>
+    <string name="keepalive_unknown">状态未知</string>
+    <string name="keepalive_open_failed">无法跳转，请手动到系统设置中查找</string>
+
+    <!-- Keep-alive foreground service -->
+    <string name="keepalive_notification_title">NotifyLog 正在记录通知</string>
+    <string name="keepalive_notification_text">用于保持后台存活，可在设置中关闭</string>
+    <string name="keepalive_stats">最近 1h 有 %1$d 条通知</string>
+    <string name="keepalive_channel_name">后台保活</string>
+    <string name="keepalive_channel_desc">保持通知记录服务常驻的静音通知</string>
+    <string name="keepalive_needs_post_permission">需要通知权限才能显示保活常驻通知</string>
+
+    <!-- Platform notes -->
+    <string name="note_otp">Android 15 起，系统会对第三方通知监听器遮蔽验证码类通知的正文，此类内容可能记录不全。这是平台限制。</string>
+</resources>
