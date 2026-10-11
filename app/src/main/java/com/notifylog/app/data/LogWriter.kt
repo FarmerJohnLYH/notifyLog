@@ -79,7 +79,12 @@ object LogWriter {
             while (isActive) {
                 signal.receive()
                 delay(FLUSH_INTERVAL_MS)      // let the rest of the burst land
-                writeBatch(d, takeAll())
+                val batch = takeAll()
+                writeBatch(d, batch)
+                // Dates the outage if this process is killed later on.
+                if (batch.isNotEmpty()) {
+                    com.notifylog.app.service.ServiceState.touch(app, System.currentTimeMillis())
+                }
                 maybeRefreshStats(app)
                 maybeRunMaintenance(app, d)
             }
@@ -121,8 +126,15 @@ object LogWriter {
         val d = dao ?: return
         val batch = takeAll()
         if (batch.isEmpty()) return
-        runBlocking {
+        val written = runBlocking {
             withTimeoutOrNull(timeoutMs) { writeBatch(d, batch) }
+        }
+        if (written == null) {
+            // Timed out: put the rows back so the next flush can retry them
+            // instead of dropping the last half-second of captures on the floor.
+            synchronized(lock) { buffer.addAll(0, batch) }
+            signal.trySend(Unit)
+            Log.w(TAG, "flush timed out; ${batch.size} rows requeued")
         }
     }
 
@@ -131,10 +143,29 @@ object LogWriter {
         else ArrayList<NotificationEntity>(buffer).also { buffer.clear() }
     }
 
-    private suspend fun writeBatch(d: NotifyDao, batch: List<NotificationEntity>) {
-        if (batch.isEmpty()) return
-        runCatching { d.insertAll(batch) }
-            .onFailure { Log.w(TAG, "batch insert of ${batch.size} rows failed", it) }
+    /**
+     * @return true when the rows reached disk.
+     *
+     * A failed batch is retried once row-by-row: a single malformed row (or one
+     * oversized notification) should cost that row, not the whole batch. Rows
+     * that still fail are counted, because silently losing captures is the one
+     * failure mode this app must never have.
+     */
+    private suspend fun writeBatch(d: NotifyDao, batch: List<NotificationEntity>): Boolean {
+        if (batch.isEmpty()) return true
+        val bulk = runCatching { d.insertAll(batch) }
+        if (bulk.isSuccess) return true
+        Log.w(TAG, "batch insert of ${batch.size} rows failed; retrying individually",
+            bulk.exceptionOrNull())
+        var lost = 0
+        for (row in batch) {
+            if (runCatching { d.insertAll(listOf(row)) }.isFailure) lost++
+        }
+        if (lost > 0) {
+            droppedCount += lost
+            Log.w(TAG, "$lost rows could not be written")
+        }
+        return lost == 0
     }
 
     /**

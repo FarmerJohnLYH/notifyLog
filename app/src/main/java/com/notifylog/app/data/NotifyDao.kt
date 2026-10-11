@@ -19,17 +19,25 @@ interface NotifyDao {
     suspend fun insertAll(items: List<NotificationEntity>)
 
     /**
-     * One page of the log, newest first, with optional app filter and keyword.
+     * One page of the log, newest first — the only read path, shared by the list
+     * screen and the exporter.
      *
-     * Both filters are applied in SQL with null meaning "no filter", which keeps
-     * the UI to a single query path. The keyword match is a plain `LIKE` scan by
-     * design (no FTS table — it would roughly double on-disk size); callers must
-     * pass the query through [escapeLike] so user-typed `%`/`_` stay literal.
+     * Every filter is applied in SQL with null meaning "no filter". The keyword
+     * match is a plain `LIKE` scan by design (no FTS table — it would roughly
+     * double on-disk size); callers must pass the query through [escapeLike] so
+     * user-typed `%`/`_` stay literal.
+     *
+     * Paging is by keyset ([afterTime]/[afterId]) rather than OFFSET: capture
+     * keeps inserting at the top, and with OFFSET every new row shifts the
+     * window so the next page repeats rows the caller already has. [maxId]
+     * freezes the walk against those same inserts, which is what makes an export
+     * a snapshot rather than a moving target.
      */
     @Query(
         """
         SELECT * FROM notification_log
-        WHERE (:pkg IS NULL OR packageName = :pkg)
+        WHERE (:maxId IS NULL OR id <= :maxId)
+          AND (:pkg IS NULL OR packageName = :pkg)
           AND (:from IS NULL OR postTime >= :from)
           AND (:to IS NULL OR postTime < :to)
           AND (:q IS NULL
@@ -38,22 +46,23 @@ interface NotifyDao {
                OR bigText  LIKE '%' || :q || '%' ESCAPE '\'
                OR subText  LIKE '%' || :q || '%' ESCAPE '\'
                OR appLabel LIKE '%' || :q || '%' ESCAPE '\')
+          AND (:afterTime IS NULL
+               OR postTime < :afterTime
+               OR (postTime = :afterTime AND id < :afterId))
         ORDER BY postTime DESC, id DESC
-        LIMIT :limit OFFSET :offset
+        LIMIT :limit
         """
     )
-    suspend fun pageRange(
-        pkg: String?,
-        q: String?,
-        from: Long?,
-        to: Long?,
-        limit: Int,
-        offset: Int
+    suspend fun page(
+        pkg: String? = null,
+        q: String? = null,
+        from: Long? = null,
+        to: Long? = null,
+        maxId: Long? = null,
+        afterTime: Long? = null,
+        afterId: Long? = null,
+        limit: Int
     ): List<NotificationEntity>
-
-    /** The unbounded-time page the UI uses. */
-    suspend fun page(pkg: String?, q: String?, limit: Int, offset: Int): List<NotificationEntity> =
-        pageRange(pkg, q, from = null, to = null, limit = limit, offset = offset)
 
     /**
      * Emits on every write to the table. The list screen uses it purely as an
@@ -71,6 +80,10 @@ interface NotifyDao {
 
     @Query("SELECT MIN(postTime) FROM notification_log")
     suspend fun oldestPostTime(): Long?
+
+    /** Highest row id; used to freeze an export against concurrent captures. */
+    @Query("SELECT IFNULL(MAX(id), 0) FROM notification_log")
+    suspend fun maxId(): Long
 
     /** Apps that have at least one log, most talkative first — powers the filter picker. */
     @Query(

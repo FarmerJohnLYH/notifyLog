@@ -60,22 +60,22 @@ class NotifyDaoTest {
     @Test
     fun `rows come back newest first`() = runTest {
         dao.insertAll(listOf(row(100), row(300), row(200)))
-        val all = dao.page(null, null, 10, 0)
+        val all = dao.page(limit = 10)
         assertEquals(listOf(300L, 200L, 100L), all.map { it.postTime })
     }
 
     @Test
     fun `paging walks the whole table without repeats or holes`() = runTest {
         dao.insertAll((1L..25L).map { row(it) })
-        val first = dao.page(null, null, 10, 0)
-        val second = dao.page(null, null, 10, 10)
-        val third = dao.page(null, null, 10, 20)
-
-        assertEquals(10, first.size)
-        assertEquals(10, second.size)
-        assertEquals(5, third.size)
-        val seen = (first + second + third).map { it.id }
-        assertEquals(25, seen.toSet().size)
+        val pages = ArrayList<NotificationEntity>()
+        var cursor: NotificationEntity? = null
+        repeat(3) {
+            val page = dao.page(afterTime = cursor?.postTime, afterId = cursor?.id, limit = 10)
+            pages.addAll(page)
+            cursor = page.lastOrNull()
+        }
+        assertEquals(25, pages.size)
+        assertEquals(25, pages.map { it.id }.toSet().size)
     }
 
     // ---- filters ----
@@ -83,13 +83,13 @@ class NotifyDaoTest {
     @Test
     fun `a null package filter means all apps`() = runTest {
         dao.insertAll(listOf(row(1, pkg = "com.a"), row(2, pkg = "com.b")))
-        assertEquals(2, dao.page(null, null, 10, 0).size)
+        assertEquals(2, dao.page(limit = 10).size)
     }
 
     @Test
     fun `the package filter narrows to one app`() = runTest {
         dao.insertAll(listOf(row(1, pkg = "com.a"), row(2, pkg = "com.b")))
-        val only = dao.page("com.a", null, 10, 0)
+        val only = dao.page(pkg = "com.a", limit = 10)
         assertEquals(1, only.size)
         assertEquals("com.a", only[0].packageName)
     }
@@ -103,15 +103,15 @@ class NotifyDaoTest {
                 row(3, title = "无关", text = "无关")
             )
         )
-        assertEquals(1, dao.page(null, "发货", 10, 0).size)
-        assertEquals(1, dao.page(null, "验证码", 10, 0).size)
-        assertEquals(3, dao.page(null, null, 10, 0).size)
+        assertEquals(1, dao.page(q = "发货", limit = 10).size)
+        assertEquals(1, dao.page(q = "验证码", limit = 10).size)
+        assertEquals(3, dao.page(limit = 10).size)
     }
 
     @Test
     fun `the keyword also matches the app label`() = runTest {
         dao.insertAll(listOf(row(1, label = "微信"), row(2, label = "支付宝")))
-        assertEquals(1, dao.page(null, "微信", 10, 0).size)
+        assertEquals(1, dao.page(q = "微信", limit = 10).size)
     }
 
     @Test
@@ -123,7 +123,7 @@ class NotifyDaoTest {
                 row(3, pkg = "com.a", text = "miss")
             )
         )
-        val result = dao.page("com.a", "hit", 10, 0)
+        val result = dao.page(pkg = "com.a", q = "hit", limit = 10)
         assertEquals(1, result.size)
         assertEquals("com.a", result[0].packageName)
     }
@@ -132,7 +132,7 @@ class NotifyDaoTest {
     fun `an escaped wildcard matches literally instead of matching everything`() = runTest {
         dao.insertAll(listOf(row(1, text = "电量 100%"), row(2, text = "普通消息")))
         // Unescaped, "%" would match every row.
-        val result = dao.page(null, NotifyDao.escapeLike("100%"), 10, 0)
+        val result = dao.page(q = NotifyDao.escapeLike("100%"), limit = 10)
         assertEquals(1, result.size)
         assertEquals("电量 100%", result[0].text)
     }
@@ -140,7 +140,7 @@ class NotifyDaoTest {
     @Test
     fun `an escaped underscore does not act as a single-char wildcard`() = runTest {
         dao.insertAll(listOf(row(1, text = "a_b"), row(2, text = "axb")))
-        val result = dao.page(null, NotifyDao.escapeLike("a_b"), 10, 0)
+        val result = dao.page(q = NotifyDao.escapeLike("a_b"), limit = 10)
         assertEquals(1, result.size)
         assertEquals("a_b", result[0].text)
     }
@@ -148,20 +148,20 @@ class NotifyDaoTest {
     // ---- time range (export) ----
 
     @Test
-    fun `pageRange bounds are inclusive start and exclusive end`() = runTest {
+    fun `range bounds are inclusive start and exclusive end`() = runTest {
         dao.insertAll(listOf(row(100), row(200), row(300)))
-        val result = dao.pageRange(null, null, 100, 300, 10, 0)
+        val result = dao.page(from = 100, to = 300, limit = 10)
         assertEquals(listOf(200L, 100L), result.map { it.postTime })
     }
 
     @Test
-    fun `pageRange with null bounds returns everything`() = runTest {
+    fun `null range bounds return everything`() = runTest {
         dao.insertAll(listOf(row(100), row(200)))
-        assertEquals(2, dao.pageRange(null, null, null, null, 10, 0).size)
+        assertEquals(2, dao.page(limit = 10).size)
     }
 
     @Test
-    fun `pageRange combines with the package filter`() = runTest {
+    fun `the range combines with the package filter`() = runTest {
         dao.insertAll(
             listOf(
                 row(100, pkg = "com.a"),
@@ -169,9 +169,50 @@ class NotifyDaoTest {
                 row(150, pkg = "com.b")
             )
         )
-        val result = dao.pageRange("com.a", null, 100, 180, 10, 0)
+        val result = dao.page(pkg = "com.a", from = 100, to = 180, limit = 10)
         assertEquals(1, result.size)
         assertEquals(100L, result[0].postTime)
+    }
+
+    // ---- keyset paging (list + export) ----
+
+    @Test
+    fun `keyset paging does not re-serve rows when captures arrive mid-walk`() = runTest {
+        dao.insertAll((1L..10L).map { row(it) })
+        val first = dao.page(limit = 5)
+        assertEquals(listOf(10L, 9L, 8L, 7L, 6L), first.map { it.postTime })
+
+        // New captures land at the top between pages — OFFSET would re-serve
+        // rows already shown; a keyset cursor must not.
+        dao.insertAll(listOf(row(11), row(12)))
+        val last = first.last()
+        val second = dao.page(afterTime = last.postTime, afterId = last.id, limit = 5)
+        assertEquals(listOf(5L, 4L, 3L, 2L, 1L), second.map { it.postTime })
+        assertEquals(10, (first + second).map { it.id }.toSet().size)
+    }
+
+    @Test
+    fun `rows sharing a timestamp are paged by id without loss`() = runTest {
+        dao.insertAll((1L..6L).map { row(500) })       // identical postTime
+        val first = dao.page(limit = 3)
+        val last = first.last()
+        val second = dao.page(afterTime = last.postTime, afterId = last.id, limit = 3)
+        assertEquals(6, (first + second).map { it.id }.toSet().size)
+    }
+
+    @Test
+    fun `maxId freezes the walk at the snapshot boundary`() = runTest {
+        dao.insertAll((1L..5L).map { row(it) })
+        val snapshot = dao.maxId()
+        dao.insertAll(listOf(row(6)))   // captured during the export
+        val page = dao.page(maxId = snapshot, limit = 50)
+        assertEquals(5, page.size)
+        assertTrue(page.none { it.postTime == 6L })
+    }
+
+    @Test
+    fun `maxId is zero on an empty table`() = runTest {
+        assertEquals(0L, dao.maxId())
     }
 
     // ---- aggregates ----
@@ -207,14 +248,14 @@ class NotifyDaoTest {
         dao.insertAll(listOf(row(100), row(200), row(300)))
         val removed = dao.deleteOlderThan(250)
         assertEquals(2, removed)
-        assertEquals(listOf(300L), dao.page(null, null, 10, 0).map { it.postTime })
+        assertEquals(listOf(300L), dao.page(limit = 10).map { it.postTime })
     }
 
     @Test
     fun `trimToNewest keeps exactly the newest rows`() = runTest {
         dao.insertAll((1L..10L).map { row(it) })
         dao.trimToNewest(3)
-        val left = dao.page(null, null, 10, 0)
+        val left = dao.page(limit = 10)
         assertEquals(3, left.size)
         assertEquals(listOf(10L, 9L, 8L), left.map { it.postTime })
     }
@@ -238,6 +279,6 @@ class NotifyDaoTest {
         dao.insertAll((1L..5L).map { row(it) })
         dao.clearAll()
         assertEquals(0, dao.count())
-        assertTrue(dao.page(null, null, 10, 0).isEmpty())
+        assertTrue(dao.page(limit = 10).isEmpty())
     }
 }

@@ -33,6 +33,7 @@ import com.notifylog.app.service.ServiceState
 import com.notifylog.app.util.Formats
 import com.notifylog.app.util.padSystemBars
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -60,6 +61,8 @@ class LogListActivity : AppCompatActivity() {
     private var query: String? = null
     private var endReached = false
     private var loading = false
+    private var reloadPending = false
+    private var bannerRechecks = 0
 
     private var pendingExportFormat: Exporter.Format = Exporter.Format.JSON
     private var pendingExportFrom: Long? = null
@@ -92,13 +95,52 @@ class LogListActivity : AppCompatActivity() {
             result.data?.data?.let { runExport(it, pendingExportFormat) }
         }
 
+        savedInstanceState?.let { restore(it) }
+        // A range picker that survived recreation still holds its own state but
+        // lost our callback; re-attach it or confirming the range does nothing.
+        (supportFragmentManager.findFragmentByTag(RANGE_PICKER_TAG)
+            as? MaterialDatePicker<androidx.core.util.Pair<Long, Long>>)
+            ?.let { attachRangeListener(it, pendingExportFormat) }
+
+        renderFilterChips()
         observeChanges()
         reload()
     }
 
     override fun onResume() {
         super.onResume()
+        bannerRechecks = 0
         updateStatusBanner()
+        // The change-flow only runs while STARTED, so anything captured while
+        // the app was in the background would otherwise stay invisible until
+        // the next notification arrived.
+        if (isScrolledToTop()) reload()
+        // A force-stop cancels the sticky service; re-apply what the user asked
+        // for, from the foreground where starting an FGS is allowed.
+        if (Settings.keepAliveEnabled(this)) KeepAliveManager.startKeepAlive(this)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // The SAF picker and the date picker can outlive this activity; without
+        // these the export would silently run with the wrong format or scope.
+        outState.putString(STATE_PKG, packageFilter)
+        outState.putString(STATE_PKG_LABEL, packageFilterLabel)
+        outState.putString(STATE_QUERY, query)
+        outState.putString(STATE_FORMAT, pendingExportFormat.name)
+        pendingExportFrom?.let { outState.putLong(STATE_FROM, it) }
+        pendingExportTo?.let { outState.putLong(STATE_TO, it) }
+    }
+
+    private fun restore(state: Bundle) {
+        packageFilter = state.getString(STATE_PKG)
+        packageFilterLabel = state.getString(STATE_PKG_LABEL)
+        query = state.getString(STATE_QUERY)
+        pendingExportFormat = state.getString(STATE_FORMAT)
+            ?.let { runCatching { Exporter.Format.valueOf(it) }.getOrNull() }
+            ?: Exporter.Format.JSON
+        pendingExportFrom = state.takeIf { it.containsKey(STATE_FROM) }?.getLong(STATE_FROM)
+        pendingExportTo = state.takeIf { it.containsKey(STATE_TO) }?.getLong(STATE_TO)
     }
 
     // ---- data ----
@@ -127,15 +169,29 @@ class LogListActivity : AppCompatActivity() {
     }
 
     private fun loadPage(reset: Boolean) {
-        if (loading || (endReached && !reset)) return
+        if (loading) {
+            // A filter change that arrives mid-load must not be dropped, or the
+            // chips end up describing a list they no longer match.
+            if (reset) reloadPending = true
+            return
+        }
+        if (endReached && !reset) return
         loading = true
-        val offset = if (reset) 0 else items.size
+        // Page below the oldest row already shown rather than by OFFSET: rows
+        // arriving at the top while the user scrolls would otherwise shift the
+        // window and re-deliver rows that are already on screen.
+        val before = if (reset) null else items.lastOrNull()
         val escaped = query?.takeIf { it.isNotBlank() }?.let { NotifyDao.escapeLike(it) }
 
         lifecycleScope.launch {
             val page = withContext(Dispatchers.IO) {
-                runCatching { dao.page(packageFilter, escaped, PAGE_SIZE, offset) }
-                    .getOrDefault(emptyList())
+                runCatching {
+                    dao.page(
+                        pkg = packageFilter, q = escaped,
+                        afterTime = before?.postTime, afterId = before?.id,
+                        limit = PAGE_SIZE
+                    )
+                }.getOrDefault(emptyList())
             }
             if (reset) items.clear()
             items.addAll(page)
@@ -148,6 +204,10 @@ class LogListActivity : AppCompatActivity() {
             }
             updateEmptyView()
             loading = false
+            if (reloadPending) {
+                reloadPending = false
+                reload()
+            }
         }
     }
 
@@ -350,9 +410,20 @@ class LogListActivity : AppCompatActivity() {
     }
 
     private fun showExportRangePicker(format: Exporter.Format) {
+        // Remembered so a recreation while the picker is up can re-attach the
+        // listener with the format the user actually chose.
+        pendingExportFormat = format
         val picker = MaterialDatePicker.Builder.dateRangePicker()
             .setTitleText(R.string.export_time_title)
             .build()
+        attachRangeListener(picker, format)
+        picker.show(supportFragmentManager, RANGE_PICKER_TAG)
+    }
+
+    private fun attachRangeListener(
+        picker: MaterialDatePicker<androidx.core.util.Pair<Long, Long>>,
+        format: Exporter.Format
+    ) {
         picker.addOnPositiveButtonClickListener { range ->
             // The picker hands back UTC midnights; shift to local midnights so
             // "8月5日" means the user's own day, then make the end exclusive.
@@ -361,7 +432,6 @@ class LogListActivity : AppCompatActivity() {
             val end = range.second - zone.getOffset(range.second) + DAY_MS
             launchCreateDocument(format, from = start, to = end)
         }
-        picker.show(supportFragmentManager, "export_range")
     }
 
     private fun launchCreateDocument(format: Exporter.Format, from: Long?, to: Long?) {
@@ -404,15 +474,34 @@ class LogListActivity : AppCompatActivity() {
                 binding.statusBanner.setText(R.string.status_not_granted)
                 binding.statusBanner.visibility = View.VISIBLE
             }
-            // Granted but unbound means something killed us and never rebound —
-            // exactly the case the keep-alive guide exists for.
+            // Granted but unbound means the process was killed and never
+            // rebound (or the system has not bound us yet after a cold start).
+            // Ask for a rebind and re-check shortly: a successful bind usually
+            // lands within a second or two and should clear the banner without
+            // the user having to do anything.
             !connected -> {
                 binding.statusBanner.setText(R.string.status_granted_not_connected)
                 binding.statusBanner.visibility = View.VISIBLE
                 KeepAliveManager.requestRebind(this)
+                scheduleBannerRecheck()
             }
 
             else -> binding.statusBanner.visibility = View.GONE
+        }
+    }
+
+    /** Polls the bind state a few times after a rebind request, then gives up. */
+    private fun scheduleBannerRecheck() {
+        if (bannerRechecks >= MAX_BANNER_RECHECKS) return
+        bannerRechecks++
+        lifecycleScope.launch {
+            delay(BANNER_RECHECK_MS)
+            if (ServiceState.isConnected(this@LogListActivity)) {
+                bannerRechecks = 0
+                binding.statusBanner.visibility = View.GONE
+            } else {
+                scheduleBannerRecheck()
+            }
         }
     }
 
@@ -429,5 +518,14 @@ class LogListActivity : AppCompatActivity() {
         private const val PREFETCH_DISTANCE = 20
         private const val MIN_QUERY_LENGTH = 2
         private const val DAY_MS = 24 * 60 * 60 * 1000L
+        private const val BANNER_RECHECK_MS = 1_500L
+        private const val MAX_BANNER_RECHECKS = 8
+        private const val RANGE_PICKER_TAG = "export_range"
+        private const val STATE_PKG = "pkg"
+        private const val STATE_PKG_LABEL = "pkgLabel"
+        private const val STATE_QUERY = "query"
+        private const val STATE_FORMAT = "exportFormat"
+        private const val STATE_FROM = "exportFrom"
+        private const val STATE_TO = "exportTo"
     }
 }

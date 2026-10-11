@@ -54,14 +54,20 @@ object Exporter {
         val dao = NotifyDatabase.get(context).notifyDao()
         val escaped = query?.takeIf { it.isNotBlank() }?.let { NotifyDao.escapeLike(it) }
 
-        val stream = context.contentResolver.openOutputStream(uri)
+        // "wt" truncates. Plain "w" keeps the previous file's length, so
+        // overwriting a bigger export would leave its tail glued to the new one.
+        val stream = context.contentResolver.openOutputStream(uri, "wt")
             ?: error("Cannot open ${uri} for writing")
+
+        // Snapshot boundary: rows captured *during* the export are excluded, so
+        // paging cannot re-emit a row that new inserts pushed into a later page.
+        val maxId = runCatching { dao.maxId() }.getOrNull() ?: Long.MAX_VALUE
 
         stream.use { out ->
             BufferedWriter(OutputStreamWriter(out, Charsets.UTF_8)).use { writer ->
                 when (format) {
-                    Format.JSON -> writeJson(writer, dao, pkg, escaped, from, to)
-                    Format.CSV -> writeCsv(writer, dao, pkg, escaped, from, to)
+                    Format.JSON -> writeJson(writer, dao, pkg, escaped, from, to, maxId)
+                    Format.CSV -> writeCsv(writer, dao, pkg, escaped, from, to, maxId)
                 }
             }
         }
@@ -73,11 +79,12 @@ object Exporter {
         pkg: String?,
         escapedQuery: String?,
         from: Long?,
-        to: Long?
+        to: Long?,
+        maxId: Long
     ): Int {
         writer.write("[\n")
         var count = 0
-        forEachRow(dao, pkg, escapedQuery, from, to) { row ->
+        forEachRow(dao, pkg, escapedQuery, from, to, maxId) { row ->
             if (count > 0) writer.write(",\n")
             writer.write(row.toJson().toString())
             count++
@@ -97,14 +104,15 @@ object Exporter {
         pkg: String?,
         escapedQuery: String?,
         from: Long?,
-        to: Long?
+        to: Long?,
+        maxId: Long
     ): Int {
         // BOM so Excel opens UTF-8 Chinese text correctly instead of mojibake.
         // Escaped rather than a literal so this file stays plain ASCII.
         writer.write("\uFEFF")
         writer.write("\u5E94\u7528\u540D,\u901A\u77E5\u65F6\u95F4,\u901A\u77E5\u5185\u5BB9\n")
         var count = 0
-        forEachRow(dao, pkg, escapedQuery, from, to) { row ->
+        forEachRow(dao, pkg, escapedQuery, from, to, maxId) { row ->
             writer.write(
                 listOf(
                     row.appLabel ?: row.packageName,
@@ -125,22 +133,32 @@ object Exporter {
             .joinToString(" | ")
             .replace('\n', ' ')
 
-    /** Pages through the query so memory stays flat regardless of table size. */
+    /**
+     * Pages through the query so memory stays flat regardless of table size.
+     *
+     * Walks a keyset cursor rather than OFFSET, and stops at [maxId]: while the
+     * export runs the listener keeps inserting rows, and an OFFSET walk would
+     * hand back rows it had already written as the window shifted underneath.
+     */
     private suspend inline fun forEachRow(
         dao: NotifyDao,
         pkg: String?,
         escapedQuery: String?,
         from: Long?,
         to: Long?,
+        maxId: Long,
         action: (NotificationEntity) -> Unit
     ) {
-        var offset = 0
+        var cursor: NotificationEntity? = null
         while (true) {
-            val page = dao.pageRange(pkg, escapedQuery, from, to, PAGE, offset)
+            val page = dao.page(
+                pkg = pkg, q = escapedQuery, from = from, to = to, maxId = maxId,
+                afterTime = cursor?.postTime, afterId = cursor?.id, limit = PAGE
+            )
             if (page.isEmpty()) break
             page.forEach(action)
             if (page.size < PAGE) break
-            offset += PAGE
+            cursor = page.last()
         }
     }
 

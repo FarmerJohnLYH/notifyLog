@@ -1,0 +1,41 @@
+== NotifyLog regression @ 20260805-170956 ==
+installed: ../app/build/outputs/apk/release/app-release.apk
+poster package: com.android.shell
+-- A 功能回归 --
+  FAIL  A1-捕获入库  (expected=5 actual=4)
+  FAIL  A1-内容正确  (expected=A1标题20260805-170956 actual=刷新验证)
+  FAIL  A2-重复不入库  (expected=5 actual=4)
+  FAIL  A3-变化入库  (expected=6 actual=4)
+  FAIL  A5-顶部实时可见  (列表未出现新记录)
+  PASS  A6-搜索过滤
+  PASS  A7-筛选器可用
+  FAIL  A8-删除生效  (菜单未出现)
+  FAIL  A8-排除后不入库  (菜单未出现)
+  PASS  A10-CSV行数=DB行数
+  PASS  A10-表头正确
+  FAIL  A11-JSON导出  (未生成文件)
+  PASS  A13-前台服务运行
+  PASS  A13-常驻计数文本(最近 1h 有 0 条通知)
+  FAIL  A15-心跳已调度  (alarm 未见)
+  FAIL  A16-清空生效  (expected=0 actual=4)
+  FAIL  A16-清空后重录同内容  (expected=1 actual=4)
+  FAIL  A17-过期行被清理  (expected=4 actual=5)
+  INFO  A18/A19 截图已存 reports/shots/（人工复核）
+-- B 稳定性 --
+  FAIL  B1-100条全部入库  (expected=105 actual=5)
+  PASS  B1-无崩溃
+  INFO  B1 注入+落库耗时 13s
+  FAIL  B2-杀后重绑并恢复捕获  (60s 内未恢复)
+  FAIL  B2-断档已记录  (listener_event 无新断开事件)
+  PASS  B3-数据完整
+  FAIL  B3-重启后捕获恢复  (expected=6 actual=5)
+  PASS  B3-前台服务自动恢复
+  FAIL  B3-心跳自动恢复  (alarm 未见)
+-- C 内存/CPU（记录型，无硬阈值，环比恶化需关注） --
+  INFO  C1 后台 PSS: 35701KB | C2 前台 PSS: 30245KB
+  INFO  C3 空闲 CPU: 0.0% | C4 注入期 CPU: 0.0%
+  INFO  C5 DB 大小: 4096B / 5 行 | C6 APK: 2351385B
+  PASS  C1-后台PSS<200MB(35701KB)
+  PASS  C6-APK<3MB
+== 结果: PASS=11 FAIL=17 SKIP=0 ==
+失败用例: A1-捕获入库 A1-内容正确 A2-重复不入库 A3-变化入库 A5-顶部实时可见 A8-删除生效 A8-排除后不入库 A11-JSON导出 A15-心跳已调度 A16-清空生效 A16-清空后重录同内容 A17-过期行被清理 B1-100条全部入库 B2-杀后重绑并恢复捕获 B2-断档已记录 B3-重启后捕获恢复 B3-心跳自动恢复

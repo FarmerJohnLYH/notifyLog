@@ -16,9 +16,18 @@ object NotificationFilter {
 
     private const val DEDUP_LRU_SIZE = 200
 
-    // access-ordered LRU of recent content hashes
-    private val recent = object : LinkedHashMap<Long, Boolean>(256, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Boolean>): Boolean =
+    /**
+     * How long the same content is treated as a re-post rather than a new
+     * notification. Long enough to swallow the per-second churn of progress and
+     * media notifications, short enough that a contact sending "ok" twice in an
+     * afternoon is recorded twice — the count-only cap this replaces could
+     * suppress that for days on a quiet device.
+     */
+    private const val DEDUP_WINDOW_MS = 60_000L
+
+    // hash -> last time it was seen; capped for memory, aged out by time
+    private val recent = object : LinkedHashMap<Long, Long>(256, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Long>): Boolean =
             size > DEDUP_LRU_SIZE
     }
 
@@ -64,12 +73,11 @@ object NotificationFilter {
         flags and Notification.FLAG_ONGOING_EVENT != 0 ||
             flags and Notification.FLAG_FOREGROUND_SERVICE != 0
 
-    /** True if this content hash was seen very recently (duplicate update). */
+    /** True if this exact content was already seen within [DEDUP_WINDOW_MS]. */
     @Synchronized
-    fun isDuplicate(hash: Long): Boolean {
-        if (recent.containsKey(hash)) return true
-        recent[hash] = true
-        return false
+    fun isDuplicate(hash: Long, now: Long = System.currentTimeMillis()): Boolean {
+        val previous = recent.put(hash, now)
+        return previous != null && now - previous < DEDUP_WINDOW_MS
     }
 
     /** Drops the dedup memory; used by tests and after a "clear all". */

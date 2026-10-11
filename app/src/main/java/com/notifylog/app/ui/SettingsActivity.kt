@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.notifylog.app.R
+import com.notifylog.app.collect.NotificationFilter
 import com.notifylog.app.data.ListenerEventDao
 import com.notifylog.app.data.NotifyDatabase
 import com.notifylog.app.data.Settings
@@ -275,6 +276,10 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
             AppIcons.clear()
+            // The dedup LRU still remembers recent content hashes; without this
+            // a notification identical to a pre-wipe one would be silently
+            // skipped right after "clear all".
+            NotificationFilter.resetDedupCache()
             toast(getString(R.string.dialog_cleared))
             refreshDynamicSummaries()
         }
