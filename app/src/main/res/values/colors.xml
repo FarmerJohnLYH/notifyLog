@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0B5AA2</color>
+    <color name="canvas_top">#FAFCFF</color>
+    <color name="canvas_bottom">#EDF3FC</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="ink">#151D2B</color>
+    <color name="secondary">#5D6879</color>
+    <color name="accent">#087AFF</color>
+    <color name="glass_top">#F5FFFFFF</color>
+    <color name="glass_bottom">#DCE7F0FF</color>
+    <color name="glass_edge">#FFFFFFFF</color>
+    <color name="divider">#172A4264</color>
+    <color name="success">#159A65</color>
+    <color name="sheet_top">#FCF8FBFF</color>
+    <color name="sheet_bottom">#F2E4EDFC</color>
 </resources>

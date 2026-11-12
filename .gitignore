@@ -20,3 +20,6 @@ build.sh
 *.iml
 .DS_Store
 captures/
+
+# Local build tools, emulator data, signing backups and audit snapshots
+.local-build/

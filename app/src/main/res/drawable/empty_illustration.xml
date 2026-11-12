@@ -1,0 +1,1 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:width="80dp" android:height="80dp" android:drawable="@drawable/glass_panel"/><item android:width="80dp" android:height="80dp" android:drawable="@drawable/ic_launcher_foreground"/></layer-list>

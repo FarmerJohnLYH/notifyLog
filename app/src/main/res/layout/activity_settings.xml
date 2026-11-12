@@ -1,190 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/ic_back"
-        app:title="@string/settings_title" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="24dp">
-
-            <!-- ===== Capture ===== -->
-            <TextView style="@style/SectionHeader" android:text="@string/settings_section_capture" />
-
-            <LinearLayout android:id="@+id/rowLogOngoing" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_log_ongoing" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_log_ongoing_desc" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/screen_background">
+    <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="76dp" app:titleTextAppearance="@style/ScreenTitle" app:navigationIcon="@drawable/ic_back" app:title="@string/settings_title"/>
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="22dp" android:paddingBottom="28dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical">
+                <LinearLayout android:id="@+id/rowPermission" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/permission_title" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_bell" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/permissionSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchLogOngoing"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:clickable="false"
-                    android:focusable="false" />
-            </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowExcluded" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_excluded" />
-                    <TextView android:id="@+id/excludedSummary" style="@style/SettingSummary" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <TextView android:id="@+id/rowKeepAliveOptions" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/background_title" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_shield" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowExcluded" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_excluded" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_exclude" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/excludedSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
             </LinearLayout>
-
-            <!-- ===== Keep alive ===== -->
-            <TextView style="@style/SectionHeader" android:text="@string/settings_section_keepalive" />
-
-            <LinearLayout android:id="@+id/rowKeepAlive" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_keepalive" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_keepalive_desc" />
+            <LinearLayout android:id="@+id/keepAlivePanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical" android:visibility="gone">
+                <LinearLayout android:id="@+id/rowKeepAlive" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_keepalive" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_shield" android:drawablePadding="14dp"/>
+                    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchKeepAlive" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="false" android:focusable="false"/>
                 </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchKeepAlive"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:clickable="false"
-                    android:focusable="false" />
-            </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowHeartbeat" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_heartbeat" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_heartbeat_desc" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowHeartbeat" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_heartbeat" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_clock" android:drawablePadding="14dp"/>
+                    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchHeartbeat" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="false" android:focusable="false"/>
                 </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchHeartbeat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:clickable="false"
-                    android:focusable="false" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <TextView android:id="@+id/rowKeepAliveGuide" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/settings_keepalive_guide" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_settings" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
             </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowKeepAliveGuide" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_keepalive_guide" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_keepalive_guide_desc" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical">
+                <LinearLayout android:id="@+id/rowAppearance" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/appearance_title" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_appearance" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/appearanceSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
+                </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowStorage" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/storage_title" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_box" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/usageSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
             </LinearLayout>
-
-            <!-- ===== Storage ===== -->
-            <TextView style="@style/SectionHeader" android:text="@string/settings_section_storage" />
-
-            <LinearLayout style="@style/SettingRow" android:clickable="false" android:focusable="false">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_usage" />
-                    <TextView android:id="@+id/usageSummary" style="@style/SettingSummary" />
+            <LinearLayout android:id="@+id/storagePanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical" android:visibility="gone">
+                <TextView android:id="@+id/usageDetail" style="@style/SettingSummary" android:padding="16dp"/>
+                <LinearLayout android:id="@+id/rowAutoClean" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_auto_clean" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_clock" android:drawablePadding="14dp"/>
+                    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchAutoClean" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="false" android:focusable="false"/>
                 </LinearLayout>
-            </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowAutoClean" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_auto_clean" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_auto_clean_desc" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowRetention" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_retention" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/retentionSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchAutoClean"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:clickable="false"
-                    android:focusable="false" />
-            </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowRetention" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_retention" />
-                    <TextView android:id="@+id/retentionSummary" style="@style/SettingSummary" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowMaxRows" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_max_rows" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/maxRowsSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <TextView android:id="@+id/rowCleanNow" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/settings_clean_now" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_chevron" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <TextView android:id="@+id/rowClearAll" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/settings_clear_all" android:textSize="16sp" android:textColor="?attr/colorError" app:drawableStartCompat="@drawable/ic_chevron" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
             </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowMaxRows" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_max_rows" />
-                    <TextView android:id="@+id/maxRowsSummary" style="@style/SettingSummary" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical">
+                <TextView android:id="@+id/rowExport" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/action_export" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_export" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical">
+                <TextView android:id="@+id/rowMore" style="@style/SettingRow" android:minHeight="64dp" android:text="@string/more_options" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_more" app:drawableEndCompat="@drawable/ic_chevron" android:drawablePadding="14dp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/morePanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/glass_panel" android:orientation="vertical" android:visibility="gone">
+                <LinearLayout android:id="@+id/rowLogOngoing" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_log_ongoing" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_bell" android:drawablePadding="14dp"/>
+                    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/switchLogOngoing" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="false" android:focusable="false"/>
                 </LinearLayout>
-            </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowCleanNow" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_clean_now" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_clean_now_desc" />
+                <View android:layout_width="match_parent" android:layout_height="1px" android:layout_marginStart="53dp" android:layout_marginEnd="16dp" android:background="@color/divider"/>
+                <LinearLayout android:id="@+id/rowGaps" style="@style/SettingRow" android:minHeight="64dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_gaps" android:textSize="16sp" android:textColor="@color/ink" app:drawableStartCompat="@drawable/ic_clock" android:drawablePadding="14dp"/>
+                    <TextView android:id="@+id/gapsSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:maxWidth="140dp" android:textSize="13sp" android:textColor="@color/secondary"/>
+                    <ImageView android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="10dp" android:src="@drawable/ic_chevron" android:contentDescription="@null"/>
                 </LinearLayout>
+                <TextView android:id="@+id/droppedNote" style="@style/SettingSummary" android:padding="16dp" android:visibility="gone"/>
+                <TextView style="@style/SettingSummary" android:padding="16dp" android:text="@string/note_otp"/>
             </LinearLayout>
-
-            <View style="@style/SettingDivider" />
-
-            <LinearLayout android:id="@+id/rowClearAll" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView
-                        style="@style/SettingTitle"
-                        android:textColor="?attr/colorError"
-                        android:text="@string/settings_clear_all" />
-                    <TextView style="@style/SettingSummary" android:text="@string/settings_clear_all_desc" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- ===== Status ===== -->
-            <TextView style="@style/SectionHeader" android:text="@string/settings_section_status" />
-
-            <LinearLayout android:id="@+id/rowGaps" style="@style/SettingRow">
-                <LinearLayout style="@style/SettingRowText">
-                    <TextView style="@style/SettingTitle" android:text="@string/settings_gaps" />
-                    <TextView android:id="@+id/gapsSummary" style="@style/SettingSummary" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/droppedNote"
-                style="@style/SettingSummary"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="8dp"
-                android:visibility="gone" />
-
-            <TextView
-                style="@style/SettingSummary"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="20dp"
-                android:text="@string/note_otp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:layout_marginTop="24dp" android:text="@string/local_footer" android:textColor="@color/secondary" android:textSize="12sp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

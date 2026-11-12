@@ -8,6 +8,12 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import android.widget.TextView
+import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.Job
+import java.time.LocalDate
+import java.time.ZoneId
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +44,9 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.TimeZone
+import com.notifylog.app.util.ExportWindow
+import java.time.Instant
+import java.time.ZoneOffset
 
 /**
  * The log timeline: newest first, with keyword search and a per-app filter.
@@ -63,6 +71,8 @@ class LogListActivity : AppCompatActivity() {
     private var loading = false
     private var reloadPending = false
     private var bannerRechecks = 0
+    private var searchJob: Job? = null
+    private var appTabJob: Job? = null
 
     private var pendingExportFormat: Exporter.Format = Exporter.Format.JSON
     private var pendingExportFrom: Long? = null
@@ -77,17 +87,23 @@ class LogListActivity : AppCompatActivity() {
 
         Settings.ensure(this)
 
-        adapter = LogAdapter(lifecycleScope, ::showItemMenu)
+        adapter = LogAdapter(lifecycleScope, ::showItemMenu, ::showDetail)
         binding.recycler.layoutManager = LinearLayoutManager(this)
         binding.recycler.adapter = adapter
         binding.recycler.addOnScrollListener(pagingScrollListener)
+        (binding.recycler.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)?.supportsChangeAnimations = false
 
         binding.statusBanner.setOnClickListener {
             KeepAliveManager.tryStart(this, KeepAliveManager.notificationAccessIntent())
         }
 
         binding.toolbar.setOnMenuItemClickListener(::onMenuItem)
-        setupSearchView()
+        binding.captureStatus.setOnClickListener {
+            if (!ServiceState.isNotificationAccessGranted(this)) {
+                KeepAliveManager.tryStart(this, KeepAliveManager.notificationAccessIntent())
+            } else startActivity(Intent(this, GapsActivity::class.java))
+        }
+        binding.exportButton.setOnClickListener { showExportDialog() }
 
         exportLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -96,6 +112,13 @@ class LogListActivity : AppCompatActivity() {
         }
 
         savedInstanceState?.let { restore(it) }
+        setupSearchView()
+        binding.searchInput.setQuery(query.orEmpty(), false)
+        binding.searchInput.clearFocus()
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_EXPORT, false)) {
+            intent.removeExtra(EXTRA_EXPORT)
+            binding.root.post { showExportDialog() }
+        }
         // A range picker that survived recreation still holds its own state but
         // lost our callback; re-attach it or confirming the range does nothing.
         (supportFragmentManager.findFragmentByTag(RANGE_PICKER_TAG)
@@ -105,6 +128,11 @@ class LogListActivity : AppCompatActivity() {
         renderFilterChips()
         observeChanges()
         reload()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_EXPORT, false)) showExportDialog()
     }
 
     override fun onResume() {
@@ -197,12 +225,13 @@ class LogListActivity : AppCompatActivity() {
             items.addAll(page)
             if (page.size < PAGE_SIZE) endReached = true
 
-            adapter.submitList(ArrayList(items)) {
+            adapter.submitEntries(ArrayList(items)) {
                 // Rows prepended at 0 land above the viewport anchor and stay
                 // invisible; a reset load should always end up showing the top.
                 if (reset) binding.recycler.scrollToPosition(0)
             }
             updateEmptyView()
+            if (reset) renderAppTabs()
             loading = false
             if (reloadPending) {
                 reloadPending = false
@@ -229,19 +258,22 @@ class LogListActivity : AppCompatActivity() {
     // ---- filters ----
 
     private fun setupSearchView() {
-        val item = binding.toolbar.menu.findItem(R.id.action_search) ?: return
-        val search = item.actionView as? SearchView ?: return
+        val search = binding.searchInput
         search.queryHint = getString(R.string.search_hint)
         search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(q: String?): Boolean {
+                searchJob?.cancel()
                 applyQuery(q)
                 search.clearFocus()
                 return true
             }
 
             override fun onQueryTextChange(q: String?): Boolean {
-                // Very short fragments match almost everything; wait for a real term.
-                if (q.isNullOrBlank() || q.length >= MIN_QUERY_LENGTH) applyQuery(q)
+                searchJob?.cancel()
+                searchJob = lifecycleScope.launch {
+                    delay(220)
+                    applyQuery(q)
+                }
                 return true
             }
         })
@@ -267,14 +299,45 @@ class LogListActivity : AppCompatActivity() {
         val group = binding.filterChips
         group.removeAllViews()
 
-        packageFilter?.let { pkg ->
-            group.addView(filterChip(packageFilterLabel ?: pkg) { applyPackageFilter(null) })
-        }
         query?.let { q ->
-            group.addView(filterChip(getString(R.string.chip_query, q)) { applyQuery(null) })
+            group.addView(filterChip(getString(R.string.chip_query, q)) {
+                binding.searchInput.setQuery("", false)
+                applyQuery(null)
+            })
         }
         binding.filterBar.visibility = if (group.isEmpty()) View.GONE else View.VISIBLE
     }
+
+    private fun renderAppTabs() {
+        appTabJob?.cancel()
+        appTabJob = lifecycleScope.launch {
+            val counts = withContext(Dispatchers.IO) { dao.appCounts() }
+            binding.appTabs.removeAllViews()
+            fun add(label: String, selected: Boolean, click: () -> Unit) {
+                val pill = TextView(this@LogListActivity, null, 0, R.style.Pill).apply {
+                    text = label
+                    isSelected = selected
+                    contentDescription = label
+                    setOnClickListener { click() }
+                }
+                binding.appTabs.addView(pill, LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, dp(48)))
+            }
+            add(getString(R.string.filter_all), packageFilter == null) { applyPackageFilter(null) }
+            val displayed = counts.take(4).toMutableList()
+            counts.find { it.packageName == packageFilter }?.let { selected ->
+                if (displayed.none { it.packageName == selected.packageName }) displayed.add(selected)
+            }
+            displayed.forEach { app ->
+                add(app.appLabel ?: app.packageName, app.packageName == packageFilter) {
+                    applyPackageFilter(app.packageName, app.appLabel ?: app.packageName)
+                }
+            }
+            if (counts.size > 4) add(getString(R.string.filter_more), false) { showAppPicker() }
+        }
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun filterChip(text: String, onClose: () -> Unit): Chip =
         Chip(this).apply {
@@ -287,22 +350,9 @@ class LogListActivity : AppCompatActivity() {
     // ---- menu ----
 
     private fun onMenuItem(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.action_filter_app -> {
-            showAppPicker(); true
-        }
-
-        R.id.action_export -> {
-            showExportDialog(); true
-        }
-
-        R.id.action_keepalive -> {
-            startActivity(Intent(this, KeepAliveActivity::class.java)); true
-        }
-
         R.id.action_settings -> {
             startActivity(Intent(this, SettingsActivity::class.java)); true
         }
-
         else -> false
     }
 
@@ -328,6 +378,26 @@ class LogListActivity : AppCompatActivity() {
                 }
                 .show()
         }
+    }
+
+    private fun showDetail(entity: NotificationEntity) {
+        val detail = listOfNotNull(
+            entity.title, entity.bigText ?: entity.text, entity.subText
+        ).filter { it.isNotBlank() }.distinct().joinToString("\n\n")
+        val message = TextView(this).apply {
+            text = getString(R.string.detail_message, Formats.dateTime(entity.postTime), detail)
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(context, R.color.ink))
+            setTextIsSelectable(true)
+            setPadding(dp(24), dp(12), dp(24), dp(20))
+        }
+        val scroll = android.widget.ScrollView(this).apply { addView(message) }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(entity.appLabel ?: entity.packageName)
+            .setView(scroll)
+            .setPositiveButton(R.string.item_copy) { _, _ -> copy(entity) }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
     }
 
     private fun showItemMenu(entity: NotificationEntity) {
@@ -359,7 +429,7 @@ class LogListActivity : AppCompatActivity() {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) { runCatching { dao.deleteById(entity.id) } }
             items.removeAll { it.id == entity.id }
-            adapter.submitList(ArrayList(items))
+            adapter.submitEntries(ArrayList(items))
             updateEmptyView()
             toast(getString(R.string.deleted))
         }
@@ -375,38 +445,24 @@ class LogListActivity : AppCompatActivity() {
     // ---- export ----
 
     private fun showExportDialog() {
-        val formats = arrayOf<CharSequence>(
-            getString(R.string.export_json),
-            getString(R.string.export_csv)
-        )
-        // No setMessage here: AlertDialog silently drops setItems when a
-        // message is present, leaving a dialog with no options.
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.export_title)
-            .setItems(formats) { _, which ->
-                showExportRangeDialog(
-                    if (which == 0) Exporter.Format.JSON else Exporter.Format.CSV
-                )
-            }
-            .show()
+        if (supportFragmentManager.findFragmentByTag(EXPORT_SHEET_TAG) != null) return
+        ExportSheet.newInstance(packageFilterLabel ?: getString(R.string.picker_all), query)
+            .show(supportFragmentManager, EXPORT_SHEET_TAG)
     }
 
-    /** Second step: everything, or a picked date range (whole local days). */
-    private fun showExportRangeDialog(format: Exporter.Format) {
-        val options = arrayOf<CharSequence>(
-            getString(R.string.export_time_all),
-            getString(R.string.export_time_custom)
-        )
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.export_time_title)
-            .setItems(options) { _, which ->
-                if (which == 0) {
-                    launchCreateDocument(format, from = null, to = null)
-                } else {
-                    showExportRangePicker(format)
-                }
+    fun confirmExport(format: Exporter.Format, range: String) {
+        pendingExportFormat = format
+        when (range) {
+            "custom" -> showExportRangePicker(format)
+            "today", "week" -> {
+                val zone = ZoneId.systemDefault()
+                val today = LocalDate.now(zone)
+                val window = if (range == "week") ExportWindow.recentWeek(today, zone)
+                    else ExportWindow.days(today, today, zone)
+                launchCreateDocument(format, window.from, window.until)
             }
-            .show()
+            else -> launchCreateDocument(format, null, null)
+        }
     }
 
     private fun showExportRangePicker(format: Exporter.Format) {
@@ -427,10 +483,10 @@ class LogListActivity : AppCompatActivity() {
         picker.addOnPositiveButtonClickListener { range ->
             // The picker hands back UTC midnights; shift to local midnights so
             // "8月5日" means the user's own day, then make the end exclusive.
-            val zone = TimeZone.getDefault()
-            val start = range.first - zone.getOffset(range.first)
-            val end = range.second - zone.getOffset(range.second) + DAY_MS
-            launchCreateDocument(format, from = start, to = end)
+            val first = Instant.ofEpochMilli(range.first).atZone(ZoneOffset.UTC).toLocalDate()
+            val last = Instant.ofEpochMilli(range.second).atZone(ZoneOffset.UTC).toLocalDate()
+            val window = ExportWindow.days(first, last, ZoneId.systemDefault())
+            launchCreateDocument(format, from = window.from, to = window.until)
         }
     }
 
@@ -469,6 +525,13 @@ class LogListActivity : AppCompatActivity() {
     private fun updateStatusBanner() {
         val granted = ServiceState.isNotificationAccessGranted(this)
         val connected = ServiceState.isConnected(this)
+        binding.captureStatus.setText(when {
+            !granted -> R.string.capture_permission
+            connected -> R.string.recording
+            else -> R.string.capture_paused
+        })
+        binding.captureStatus.setTextColor(ContextCompat.getColor(this,
+            if (granted && connected) R.color.success else R.color.secondary))
         when {
             !granted -> {
                 binding.statusBanner.setText(R.string.status_not_granted)
@@ -498,7 +561,7 @@ class LogListActivity : AppCompatActivity() {
             delay(BANNER_RECHECK_MS)
             if (ServiceState.isConnected(this@LogListActivity)) {
                 bannerRechecks = 0
-                binding.statusBanner.visibility = View.GONE
+                updateStatusBanner()
             } else {
                 scheduleBannerRecheck()
             }
@@ -507,8 +570,8 @@ class LogListActivity : AppCompatActivity() {
 
     private fun updateEmptyView() {
         val filtered = packageFilter != null || query != null
-        binding.empty.setText(if (filtered) R.string.empty_filtered else R.string.empty_hint)
-        binding.empty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+        binding.emptyState.setText(if (filtered) R.string.empty_filtered else R.string.empty_hint)
+        binding.emptyState.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
@@ -516,8 +579,8 @@ class LogListActivity : AppCompatActivity() {
     companion object {
         private const val PAGE_SIZE = 100
         private const val PREFETCH_DISTANCE = 20
-        private const val MIN_QUERY_LENGTH = 2
-        private const val DAY_MS = 24 * 60 * 60 * 1000L
+        const val EXTRA_EXPORT = "openExport"
+        private const val EXPORT_SHEET_TAG = "exportSheet"
         private const val BANNER_RECHECK_MS = 1_500L
         private const val MAX_BANNER_RECHECKS = 8
         private const val RANGE_PICKER_TAG = "export_range"

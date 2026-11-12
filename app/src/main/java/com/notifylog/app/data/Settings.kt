@@ -71,6 +71,11 @@ object Settings {
 
     // ---- cold-path accessors (settings screen, service start-up) ----
 
+    fun appearance(context: Context): Int = ensure(context).getInt("appearance", -1)
+
+    fun setAppearance(context: Context, mode: Int) =
+        ensure(context).edit { putInt("appearance", mode) }
+
     fun keepAliveEnabled(context: Context): Boolean =
         ensure(context).getBoolean(KEY_KEEP_ALIVE, false)
 

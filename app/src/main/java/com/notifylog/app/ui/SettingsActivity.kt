@@ -9,7 +9,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import com.notifylog.app.service.ServiceState
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.notifylog.app.R
@@ -68,11 +71,52 @@ class SettingsActivity : AppCompatActivity() {
         bindKeepAliveSection()
         bindStorageSection()
         bindStatusSection()
+        binding.rowPermission.setOnClickListener {
+            KeepAliveManager.tryStart(this, KeepAliveManager.notificationAccessIntent())
+        }
+        fun expand(row: View, panel: View, key: String) {
+            panel.visibility = if (savedInstanceState?.getBoolean(key) == true) View.VISIBLE else View.GONE
+            row.setOnClickListener {
+                panel.isVisible = !panel.isVisible
+                row.isSelected = panel.isVisible
+            }
+        }
+        expand(binding.rowKeepAliveOptions, binding.keepAlivePanel, "keepAliveExpanded")
+        expand(binding.rowStorage, binding.storagePanel, "storageExpanded")
+        expand(binding.rowMore, binding.morePanel, "moreExpanded")
+        binding.rowAppearance.setOnClickListener { showAppearancePicker() }
+        binding.rowExport.setOnClickListener {
+            startActivity(Intent(this, LogListActivity::class.java)
+                .putExtra(LogListActivity.EXTRA_EXPORT, true)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            finish()
+        }
     }
 
     override fun onResume() {
         super.onResume()
         refreshDynamicSummaries()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("keepAliveExpanded", binding.keepAlivePanel.isVisible)
+        outState.putBoolean("storageExpanded", binding.storagePanel.isVisible)
+        outState.putBoolean("moreExpanded", binding.morePanel.isVisible)
+    }
+
+    private fun showAppearancePicker() {
+        val modes = intArrayOf(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+            AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES)
+        val labels = arrayOf(getString(R.string.appearance_system), getString(R.string.appearance_light),
+            getString(R.string.appearance_dark))
+        MaterialAlertDialogBuilder(this).setTitle(R.string.appearance_title)
+            .setSingleChoiceItems(labels, modes.indexOf(Settings.appearance(this))) { dialog, which ->
+                Settings.setAppearance(this, modes[which])
+                dialog.dismiss()
+                AppCompatDelegate.setDefaultNightMode(modes[which])
+                refreshDynamicSummaries()
+            }.show()
     }
 
     // ---- capture ----
@@ -296,8 +340,14 @@ class SettingsActivity : AppCompatActivity() {
     // ---- summaries ----
 
     private fun refreshDynamicSummaries() {
-        binding.excludedSummary.text =
-            getString(R.string.settings_excluded_desc, Settings.excludedPackages.size)
+        binding.excludedSummary.text = getString(R.string.count_value, Settings.excludedPackages.size)
+        binding.permissionSummary.setText(if (ServiceState.isNotificationAccessGranted(this))
+            R.string.permission_on else R.string.permission_off)
+        binding.appearanceSummary.setText(when (Settings.appearance(this)) {
+            AppCompatDelegate.MODE_NIGHT_NO -> R.string.appearance_light
+            AppCompatDelegate.MODE_NIGHT_YES -> R.string.appearance_dark
+            else -> R.string.appearance_system
+        })
         binding.retentionSummary.text =
             getString(R.string.settings_retention_value, Settings.retentionDays(this))
         binding.maxRowsSummary.text =
@@ -329,7 +379,8 @@ class SettingsActivity : AppCompatActivity() {
             val (counts, gapCount) = stats
             val (count, oldest, size) = counts
 
-            binding.usageSummary.text = if (count == 0) {
+            binding.usageSummary.text = Formats.size(size)
+            binding.usageDetail.text = if (count == 0) {
                 getString(R.string.settings_usage_empty)
             } else {
                 val line = getString(R.string.settings_usage_value, Formats.size(size), count)

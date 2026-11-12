@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="canvas_top">#141D2A</color>
+    <color name="canvas_bottom">#0B111B</color>
+    <color name="surface">#202C3C</color>
+    <color name="ink">#F4F7FC</color>
+    <color name="secondary">#A8B6CB</color>
+    <color name="accent">#5BA5FF</color>
+    <color name="glass_top">#EC344358</color>
+    <color name="glass_bottom">#DE1C293B</color>
+    <color name="glass_edge">#668FAACB</color>
+    <color name="divider">#335F7798</color>
+    <color name="success">#53D99A</color>
+    <color name="sheet_top">#FC2E3C50</color>
+    <color name="sheet_bottom">#F21B293D</color>
+</resources>

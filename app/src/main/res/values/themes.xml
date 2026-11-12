@@ -1,23 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material3 DayNight; adapts to system light/dark automatically. -->
-    <style name="Theme.NotifyLog" parent="Theme.Material3.DayNight.NoActionBar" />
-
-    <!-- Shared building blocks for the settings / guide screens. Keeping them
-         as styles avoids repeating the same eight attributes on every row. -->
-
-    <style name="SectionHeader">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">20dp</item>
-        <item name="android:paddingBottom">6dp</item>
-        <item name="android:textSize">13sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textColor">?attr/colorPrimary</item>
+    <style name="Theme.NotifyLog" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceContainer">@color/surface</item>
+        <item name="colorSurfaceContainerHigh">@color/surface</item>
+        <item name="colorSurfaceContainerLow">@color/surface</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="colorOnSurfaceVariant">@color/secondary</item>
+        <item name="android:colorBackground">@color/canvas_top</item>
+        <item name="android:windowBackground">@drawable/screen_background</item>
+        <item name="android:textColorPrimary">@color/ink</item>
+        <item name="android:textColorSecondary">@color/secondary</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.NotifyLog.Dialog</item>
     </style>
-
+    <style name="ThemeOverlay.NotifyLog.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceMediumComponent">@style/Shape.NotifyLog</item>
+    </style>
+    <style name="Shape.NotifyLog" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">28dp</item>
+    </style>
+    <style name="ScreenTitle" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textSize">30sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ink</item>
+    </style>
+    <style name="Pill">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minWidth">64dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">18dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/pill_text</item>
+        <item name="android:background">@drawable/pill_background</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
     <style name="SettingRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -28,24 +55,9 @@
         <item name="android:focusable">true</item>
         <item name="android:paddingStart">16dp</item>
         <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
     </style>
-
-    <style name="SettingRowText">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:orientation">vertical</item>
-    </style>
-
-    <style name="SettingTitle">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
     <style name="SettingSummary">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -53,13 +65,5 @@
         <item name="android:textSize">13sp</item>
         <item name="android:lineSpacingExtra">2dp</item>
         <item name="android:textColor">?android:attr/textColorSecondary</item>
-    </style>
-
-    <style name="SettingDivider">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">1dp</item>
-        <item name="android:layout_marginStart">16dp</item>
-        <item name="android:layout_marginEnd">16dp</item>
-        <item name="android:background">?android:attr/listDivider</item>
     </style>
 </resources>

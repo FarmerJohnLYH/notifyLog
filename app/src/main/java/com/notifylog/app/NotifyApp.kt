@@ -19,6 +19,7 @@ class NotifyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Settings.ensure(this)
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(Settings.appearance(this))
         // Books the outage if the previous process was killed while connected.
         ServiceState.reconcileAfterProcessStart(this)
         // Cheap and safe when access was never granted; the system ignores it.

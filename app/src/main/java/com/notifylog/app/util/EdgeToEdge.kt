@@ -17,7 +17,13 @@ fun View.padSystemBars() {
         val bars = insets.getInsets(
             WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
         )
-        v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+        val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+        v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
+        ViewCompat.getWindowInsetsController(v)?.let { controller ->
+            val light = v.resources.getBoolean(com.notifylog.app.R.bool.light_system_bars)
+            controller.isAppearanceLightStatusBars = light
+            controller.isAppearanceLightNavigationBars = light
+        }
         insets
     }
 }

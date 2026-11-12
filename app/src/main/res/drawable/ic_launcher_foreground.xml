@@ -1,31 +1,29 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- A simple bell, centred within the adaptive-icon safe zone. -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,32
-            c-6,0 -11,5 -11,11
-            v2
-            c-8,3 -13,10 -13,19
-            v10
-            l-4,6
-            v3
-            h56
-            v-3
-            l-4,-6
-            v-10
-            c0,-9 -5,-16 -13,-19
-            v-2
-            c0,-6 -5,-11 -11,-11
-            z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M47,79
-            h14
-            c0,4 -3,7 -7,7
-            c-4,0 -7,-3 -7,-7
-            z" />
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M29,58L35,49L73,49L80,58L80,78Q80,84 74,84L34,84Q28,84 28,78Z" android:fillColor="#5084D5FF" android:strokeColor="#99D7F1FF" android:strokeWidth="1"/>
+    <group android:rotation="-9" android:pivotX="50" android:pivotY="30">
+        <path android:pathData="M32,22L66,22Q70,22 70,26L70,34Q70,38 66,38L32,38Q28,38 28,34L28,26Q28,22 32,22Z" android:fillColor="#DBFFFFFF" android:strokeColor="#FFFFFFFF" android:strokeWidth="0.7"/>
+        <path android:pathData="M34,28L38,28L38,32L34,32Z" android:fillColor="#4696ED"/>
+        <path android:pathData="M43,28L63,28M43,32L57,32" android:strokeColor="#8BAACD" android:strokeWidth="1.6" android:strokeLineCap="round"/>
+    </group>
+    <group android:rotation="8" android:pivotX="59" android:pivotY="43">
+        <path android:pathData="M40,35L74,35Q78,35 78,39L78,47Q78,51 74,51L40,51Q36,51 36,47L36,39Q36,35 40,35Z" android:fillColor="#F0FFFFFF" android:strokeColor="#FFFFFFFF" android:strokeWidth="0.7"/>
+        <path android:pathData="M42,41L46,41L46,45L42,45Z" android:fillColor="#2C83DC"/>
+        <path android:pathData="M51,41L71,41M51,45L65,45" android:strokeColor="#7DA2CA" android:strokeWidth="1.6" android:strokeLineCap="round"/>
+    </group>
+    <group android:rotation="-5" android:pivotX="51" android:pivotY="57">
+        <path android:pathData="M33,49L67,49Q71,49 71,53L71,61Q71,65 67,65L33,65Q29,65 29,61L29,53Q29,49 33,49Z" android:fillColor="#FFFFFF"/>
+        <path android:pathData="M35,55L39,55L39,59L35,59Z" android:fillColor="#448EDB"/>
+        <path android:pathData="M44,55L64,55M44,59L58,59" android:strokeColor="#7DA2CA" android:strokeWidth="1.6" android:strokeLineCap="round"/>
+    </group>
+    <path android:pathData="M27,60L42,60Q44,60 45,63L47,67L61,67L64,62Q65,60 67,60L81,60L81,78Q81,85 74,85L34,85Q27,85 27,78Z" android:strokeColor="#D9EDFFFF" android:strokeWidth="1.2">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="35" android:startY="60" android:endX="67" android:endY="87" android:type="linear">
+                <item android:offset="0" android:color="#D6ECFAFF"/>
+                <item android:offset="0.52" android:color="#A058B5FF"/>
+                <item android:offset="1" android:color="#D42068D9"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M34,79L73,79" android:strokeColor="#75D7EDFF" android:strokeWidth="1" android:strokeLineCap="round"/>
 </vector>

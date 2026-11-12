@@ -7,6 +7,11 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.notifylog.app.data.NotificationEntity
+import com.notifylog.app.R
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import com.notifylog.app.databinding.ItemLogBinding
 import com.notifylog.app.util.AppIcons
 import com.notifylog.app.util.Formats
@@ -21,8 +26,21 @@ import kotlinx.coroutines.withContext
  */
 class LogAdapter(
     private val scope: CoroutineScope,
-    private val onLongClick: (NotificationEntity) -> Unit
-) : ListAdapter<NotificationEntity, LogAdapter.VH>(DIFF) {
+    private val onLongClick: (NotificationEntity) -> Unit,
+    private val onClick: (NotificationEntity) -> Unit
+) : ListAdapter<LogAdapter.Row, LogAdapter.VH>(DIFF) {
+
+    data class Row(val entity: NotificationEntity, val date: LocalDate, val showHeader: Boolean)
+
+    fun submitEntries(entries: List<NotificationEntity>, committed: Runnable? = null) {
+        val zone = ZoneId.systemDefault()
+        var previous: LocalDate? = null
+        val rows = entries.map { entity ->
+            val date = Instant.ofEpochMilli(entity.postTime).atZone(zone).toLocalDate()
+            Row(entity, date, date != previous).also { previous = date }
+        }
+        submitList(rows, committed)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val b = ItemLogBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -33,9 +51,18 @@ class LogAdapter(
 
     inner class VH(private val b: ItemLogBinding) : RecyclerView.ViewHolder(b.root) {
 
-        fun bind(e: NotificationEntity) {
+        fun bind(row: Row) {
+            val e = row.entity
+            val today = LocalDate.now()
+            b.dayHeader.text = when (row.date) {
+                today -> b.root.context.getString(R.string.today)
+                today.minusDays(1) -> b.root.context.getString(R.string.yesterday)
+                else -> row.date.format(DateTimeFormatter.ofPattern("yyyy年M月d日"))
+            }
+            b.dayHeader.visibility = if (row.showHeader) View.VISIBLE else View.GONE
             b.app.text = e.appLabel ?: e.packageName
-            b.time.text = Formats.time(e.postTime)
+            b.time.text = Instant.ofEpochMilli(e.postTime).atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("HH:mm"))
 
             val title = e.title
             b.title.text = title.orEmpty()
@@ -47,7 +74,8 @@ class LogAdapter(
 
             bindIcon(e.packageName)
 
-            b.root.setOnLongClickListener {
+            b.content.setOnClickListener { onClick(e) }
+            b.content.setOnLongClickListener {
                 onLongClick(e)
                 true
             }
@@ -65,7 +93,7 @@ class LogAdapter(
                 b.icon.setImageDrawable(cached)
                 return
             }
-            b.icon.setImageDrawable(null)
+            b.icon.setImageResource(R.drawable.ic_box)
             val context = b.icon.context.applicationContext
             scope.launch {
                 val icon = withContext(Dispatchers.IO) { AppIcons.load(context, pkg) }
@@ -76,9 +104,9 @@ class LogAdapter(
     }
 
     companion object {
-        private val DIFF = object : DiffUtil.ItemCallback<NotificationEntity>() {
-            override fun areItemsTheSame(a: NotificationEntity, b: NotificationEntity) = a.id == b.id
-            override fun areContentsTheSame(a: NotificationEntity, b: NotificationEntity) = a == b
+        private val DIFF = object : DiffUtil.ItemCallback<Row>() {
+            override fun areItemsTheSame(a: Row, b: Row) = a.entity.id == b.entity.id
+            override fun areContentsTheSame(a: Row, b: Row) = a == b
         }
     }
 }
