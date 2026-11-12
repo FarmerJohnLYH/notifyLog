@@ -178,7 +178,7 @@ class LogListActivity : AppCompatActivity() {
     private fun observeChanges() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                dao.countFlow()
+                dao.changeFlow()
                     .drop(1)              // the initial value is already on screen
                     .debounce(400)        // coalesce a burst of captures
                     .collect {

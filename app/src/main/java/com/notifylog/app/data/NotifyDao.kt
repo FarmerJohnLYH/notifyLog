@@ -68,8 +68,9 @@ interface NotifyDao {
      * Emits on every write to the table. The list screen uses it purely as an
      * "something changed" signal to refresh the first page.
      */
-    @Query("SELECT COUNT(*) FROM notification_log")
-    fun countFlow(): Flow<Int>
+    // Only invalidation matters; EXISTS stops at the first row instead of counting history.
+    @Query("SELECT EXISTS(SELECT 1 FROM notification_log)")
+    fun changeFlow(): Flow<Boolean>
 
     @Query("SELECT COUNT(*) FROM notification_log")
     suspend fun count(): Int

@@ -61,6 +61,7 @@ class KeepAliveService : Service() {
 
     override fun onDestroy() {
         running = false
+        lastPublishedCount = null
         scope.cancel()
         super.onDestroy()
     }
@@ -68,6 +69,7 @@ class KeepAliveService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun startForegroundCompat() {
+        lastPublishedCount = null
         val notification = build(this, getString(R.string.keepalive_notification_text))
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -114,6 +116,9 @@ class KeepAliveService : Service() {
         var running = false
             private set
 
+        @Volatile
+        private var lastPublishedCount: Int? = null
+
         /**
          * Re-queries the last-hour count and repaints the resident notification.
          * No-op unless the service is actually in the foreground.
@@ -124,8 +129,10 @@ class KeepAliveService : Service() {
             runCatching {
                 val cutoff = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
                 val n = NotifyDatabase.get(app).notifyDao().countSince(cutoff)
+                if (!running || lastPublishedCount == n) return
                 val nm = app.getSystemService(NotificationManager::class.java) ?: return
                 nm.notify(NOTIFICATION_ID, build(app, app.getString(R.string.keepalive_stats, n)))
+                lastPublishedCount = n
             }
         }
 

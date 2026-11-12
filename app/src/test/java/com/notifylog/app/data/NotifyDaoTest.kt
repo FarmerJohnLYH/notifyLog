@@ -3,6 +3,12 @@ package com.notifylog.app.data
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.collect
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -54,6 +60,24 @@ class NotifyDaoTest {
         sbnKey = "k$time",
         dedupHash = time
     )
+
+    @Test
+    fun changeSignalEmitsEvenWhenTableRemainsNonempty() = runBlocking {
+        val events = Channel<Boolean>(Channel.UNLIMITED)
+        val observer = launch(Dispatchers.Default) { dao.changeFlow().collect { events.send(it) } }
+        try {
+            suspend fun next() = withTimeout(10_000) { events.receive() }
+            assertEquals(false, next())
+            dao.insertAll(listOf(row(1)))
+            assertEquals(true, next())
+            dao.insertAll(listOf(row(2)))
+            assertEquals(true, next()) // equal EXISTS values still invalidate the list
+            dao.deleteByPackage("com.chat")
+            assertEquals(false, next())
+        } finally {
+            observer.cancel()
+        }
+    }
 
     // ---- ordering & paging ----
 

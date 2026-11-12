@@ -5,7 +5,6 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -44,11 +43,7 @@ object LogWriter {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val lock = Any()
-    private val buffer = ArrayList<NotificationEntity>(64)
-
-    /** Conflated: many enqueues collapse into a single "there is work" wake-up. */
-    private val signal = Channel<Unit>(Channel.CONFLATED)
+    private val buffer = BurstBuffer<NotificationEntity>(MAX_PENDING)
 
     @Volatile
     private var dao: NotifyDao? = null
@@ -60,9 +55,8 @@ object LogWriter {
     private var started = false
 
     /** Rows discarded because the buffer was full; surfaced in the settings screen. */
-    @Volatile
-    var droppedCount: Long = 0L
-        private set
+    private val dropped = java.util.concurrent.atomic.AtomicLong()
+    val droppedCount: Long get() = dropped.get()
 
     private var lastMaintenance = 0L
 
@@ -77,7 +71,10 @@ object LogWriter {
 
         scope.launch {
             while (isActive) {
-                signal.receive()
+                buffer.signal.receive()
+                if (buffer.isEmpty()) {
+                    continue
+                }
                 delay(FLUSH_INTERVAL_MS)      // let the rest of the burst land
                 val batch = takeAll()
                 writeBatch(d, batch)
@@ -98,21 +95,14 @@ object LogWriter {
      */
     private suspend fun maybeRefreshStats(context: Context) {
         if (!com.notifylog.app.service.KeepAliveService.running) return
-        val now = System.currentTimeMillis()
-        if (now - lastStatsRefresh < STATS_INTERVAL_MS) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (lastStatsRefresh != 0L && now - lastStatsRefresh < STATS_INTERVAL_MS) return
         lastStatsRefresh = now
         com.notifylog.app.service.KeepAliveService.refreshStats(context)
     }
 
     fun enqueue(entity: NotificationEntity) {
-        synchronized(lock) {
-            if (buffer.size >= MAX_PENDING) {
-                droppedCount++
-                return
-            }
-            buffer.add(entity)
-        }
-        signal.trySend(Unit)
+        if (!buffer.offer(entity)) dropped.incrementAndGet()
     }
 
     /**
@@ -132,16 +122,12 @@ object LogWriter {
         if (written == null) {
             // Timed out: put the rows back so the next flush can retry them
             // instead of dropping the last half-second of captures on the floor.
-            synchronized(lock) { buffer.addAll(0, batch) }
-            signal.trySend(Unit)
+            buffer.restore(batch)
             Log.w(TAG, "flush timed out; ${batch.size} rows requeued")
         }
     }
 
-    private fun takeAll(): List<NotificationEntity> = synchronized(lock) {
-        if (buffer.isEmpty()) emptyList()
-        else ArrayList<NotificationEntity>(buffer).also { buffer.clear() }
-    }
+    private fun takeAll(): List<NotificationEntity> = buffer.drain()
 
     /**
      * @return true when the rows reached disk.
@@ -162,7 +148,7 @@ object LogWriter {
             if (runCatching { d.insertAll(listOf(row)) }.isFailure) lost++
         }
         if (lost > 0) {
-            droppedCount += lost
+            dropped.addAndGet(lost.toLong())
             Log.w(TAG, "$lost rows could not be written")
         }
         return lost == 0
