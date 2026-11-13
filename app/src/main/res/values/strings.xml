@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NotifyLog</string>
+    <string name="app_name">通知日志</string>
     <string name="status_not_granted">开启通知使用权，开始记录 →</string>
     <string name="status_granted_not_connected">监听已暂停 · 点此检查</string>
     <string name="empty_hint">等待下一条通知</string>
@@ -65,29 +65,29 @@
     <string name="keepalive_intro">按需开启，减少后台中断。</string>
     <string name="keepalive_intro_xiaomi">小米设备建议完成以下设置。</string>
     <string name="keepalive_step_access">通知使用权</string>
-    <string name="keepalive_step_access_desc">允许 NotifyLog 读取通知。</string>
+    <string name="keepalive_step_access_desc">允许 通知日志 读取通知。</string>
     <string name="keepalive_step_autostart">自启动</string>
-    <string name="keepalive_step_autostart_desc">安全中心 → 应用管理 → NotifyLog → 权限 → 开启「自启动」。不开则被杀后不会重启。</string>
+    <string name="keepalive_step_autostart_desc">安全中心 → 应用管理 → 通知日志 → 权限 → 开启「自启动」。不开则被杀后不会重启。</string>
     <string name="keepalive_step_battery_policy">省电策略</string>
-    <string name="keepalive_step_battery_policy_desc">在弹出的列表里找到 NotifyLog，选择「无限制」。</string>
+    <string name="keepalive_step_battery_policy_desc">在弹出的列表里找到 通知日志，选择「无限制」。</string>
     <string name="keepalive_step_battery_opt">忽略电池优化</string>
     <string name="keepalive_step_battery_opt_desc">避免 Doze 待机期间被冻结。</string>
     <string name="keepalive_step_lock">后台锁定</string>
-    <string name="keepalive_step_lock_desc">在最近任务中锁定 NotifyLog。</string>
+    <string name="keepalive_step_lock_desc">在最近任务中锁定 通知日志。</string>
     <string name="keepalive_step_foreground">前台服务</string>
     <string name="keepalive_step_foreground_desc">常驻静音通知，提升后台稳定性。</string>
     <string name="keepalive_go">前往设置</string>
     <string name="keepalive_done">✓ 已完成</string>
     <string name="keepalive_unknown">状态未知</string>
     <string name="keepalive_open_failed">无法跳转，请手动到系统设置中查找</string>
-    <string name="keepalive_notification_title">NotifyLog 正在记录通知</string>
+    <string name="keepalive_notification_title">通知日志 正在记录通知</string>
     <string name="keepalive_notification_text">用于保持后台存活，可在设置中关闭</string>
     <string name="keepalive_stats">最近 1h 有 %1$d 条通知</string>
     <string name="keepalive_channel_name">后台保活</string>
     <string name="keepalive_channel_desc">保持通知记录服务常驻的静音通知</string>
     <string name="keepalive_needs_post_permission">需要通知权限才能显示保活常驻通知</string>
     <string name="note_otp">系统可能隐藏验证码内容。</string>
-    <string name="inbox_title">通知</string>
+    <string name="inbox_title">通知日志</string>
     <string name="recording">● 记录中</string>
     <string name="capture_paused">● 已暂停</string>
     <string name="capture_permission">● 待授权</string>
@@ -99,7 +99,7 @@
     <string name="appearance_dark">暗色</string>
     <string name="storage_title">存储</string>
     <string name="more_options">更多设置</string>
-    <string name="local_footer">NotifyLog · 仅本机存储</string>
+    <string name="local_footer">通知日志 · 仅本机存储</string>
     <string name="permission_on">已开启</string>
     <string name="permission_off">未开启</string>
     <string name="filter_all">全部</string>

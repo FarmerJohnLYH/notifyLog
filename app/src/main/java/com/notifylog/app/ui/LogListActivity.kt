@@ -421,7 +421,7 @@ class LogListActivity : AppCompatActivity() {
         val text = listOfNotNull(entity.title, entity.bigText ?: entity.text, entity.subText)
             .joinToString("\n")
         val cm = getSystemService(ClipboardManager::class.java) ?: return
-        cm.setPrimaryClip(ClipData.newPlainText("NotifyLog", text))
+        cm.setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name), text))
         toast(getString(R.string.copied))
     }
 
