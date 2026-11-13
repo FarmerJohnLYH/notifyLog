@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="64dp" android:layout_height="48dp"
+    android:paddingStart="0dp" android:paddingEnd="16dp" android:contentDescription="@string/action_settings"
+    android:tooltipText="@string/action_settings" android:focusable="true" android:clickable="true">
+    <ImageView android:layout_width="48dp" android:layout_height="48dp"
+        android:background="@drawable/settings_glass_button"
+        android:src="@drawable/ic_settings" android:padding="12dp"
+        android:scaleType="fitCenter" android:duplicateParentState="true"
+        android:importantForAccessibility="no" />
+</FrameLayout>

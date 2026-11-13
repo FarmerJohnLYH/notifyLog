@@ -22,8 +22,8 @@ android {
         applicationId = "com.notifylog.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.0"
+        versionCode = 9
+        versionName = "1.0.1"
     }
 
     signingConfigs {

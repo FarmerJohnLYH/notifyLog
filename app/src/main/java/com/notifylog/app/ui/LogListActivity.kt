@@ -98,6 +98,9 @@ class LogListActivity : AppCompatActivity() {
         }
 
         binding.toolbar.setOnMenuItemClickListener(::onMenuItem)
+        binding.toolbar.menu.findItem(R.id.action_settings).actionView?.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
         binding.captureStatus.setOnClickListener {
             if (!ServiceState.isNotificationAccessGranted(this)) {
                 KeepAliveManager.tryStart(this, KeepAliveManager.notificationAccessIntent())
